@@ -165,6 +165,17 @@ btnTransfer.addEventListener('click', function (e) {
   }
 });
 
+btnLoan.addEventListener('click',function(e){
+  e.preventDefault();
+  const loanAmount = Number(inputLoanAmount.value);
+  inputLoanAmount.value = '';
+  if(loanAmount > 0){
+    currentAccount.movements.push(loanAmount);
+    updateUI(currentAccount);
+  }
+
+})
+
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 // LECTURES
