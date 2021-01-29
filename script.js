@@ -1,92 +1,194 @@
 'use strict';
 
-//seecitnf the elements in two ways
-const player0El = document.querySelector('.player--0');
-const player1El = document.querySelector('.player--1');
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+// BANKIST APP
 
-const score0El = document.querySelector('#score--0');
-const score1El = document.getElementById('score--1');
-const current0El = document.getElementById('current--0');
-const current1El = document.getElementById('current--1');
-const diceEl = document.querySelector('.dice');
-const btnNew = document.querySelector('.btn--new');
-const btnRoll = document.querySelector('.btn--roll');
-const btnHold = document.querySelector('.btn--hold');
-
-//starting the game condition
-score0El.textContent = '0';
-score1El.textContent = '0';
-diceEl.classList.add('hidden');
-
-const scores = [0, 0];
-let currentScore = 0;
-let activePLayer = 0;
-let playing = true;
-
-//switch player
-const switchPLayer = function () {
-  document.getElementById(`current--${activePLayer}`).textContent = 0;
-  activePLayer = activePLayer === 0 ? 1 : 0;
-  currentScore = 0;
-
-  player0El.classList.toggle('player--active');
-  player1El.classList.toggle('player--active');
+// Data
+const account1 = {
+  owner: 'Jonas Schmedtmann',
+  movements: [200, 450, -400, 3000, -650, -130, 70, 1300],
+  interestRate: 1.2, // %
+  pin: 1111,
 };
 
-//rolling the dice
+const account2 = {
+  owner: 'Jessica Davis',
+  movements: [5000, 3400, -150, -790, -3210, -1000, 8500, -30],
+  interestRate: 1.5,
+  pin: 2222,
+};
 
-btnRoll.addEventListener('click', function () {
-  if (playing) {
-    //1.random dice roll
-    const dice = Math.trunc(Math.random() * 6) + 1;
-    console.log(dice);
-    //2.Display Dice
-    diceEl.classList.remove('hidden');
-    diceEl.src = `dice-${dice}.png`;
+const account3 = {
+  owner: 'Steven Thomas Williams',
+  movements: [200, -200, 340, -300, -20, 50, 400, -460],
+  interestRate: 0.7,
+  pin: 3333,
+};
 
-    //check for 1
-    if (dice !== 1) {
-      //add dice to current score
-      currentScore += dice;
+const account4 = {
+  owner: 'Sarah Smith',
+  movements: [430, 1000, 700, 50, 90],
+  interestRate: 1,
+  pin: 4444,
+};
 
-      document.getElementById(
-        `current--${activePLayer}`
-      ).textContent = currentScore;
-    } else {
-      switchPLayer();
-    }
+const accounts = [account1, account2, account3, account4];
+
+// Elements
+const labelWelcome = document.querySelector('.welcome');
+const labelDate = document.querySelector('.date');
+const labelBalance = document.querySelector('.balance__value');
+const labelSumIn = document.querySelector('.summary__value--in');
+const labelSumOut = document.querySelector('.summary__value--out');
+const labelSumInterest = document.querySelector('.summary__value--interest');
+const labelTimer = document.querySelector('.timer');
+
+const containerApp = document.querySelector('.app');
+const containerMovements = document.querySelector('.movements');
+
+const btnLogin = document.querySelector('.login__btn');
+const btnTransfer = document.querySelector('.form__btn--transfer');
+const btnLoan = document.querySelector('.form__btn--loan');
+const btnClose = document.querySelector('.form__btn--close');
+const btnSort = document.querySelector('.btn--sort');
+
+const inputLoginUsername = document.querySelector('.login__input--user');
+const inputLoginPin = document.querySelector('.login__input--pin');
+const inputTransferTo = document.querySelector('.form__input--to');
+const inputTransferAmount = document.querySelector('.form__input--amount');
+const inputLoanAmount = document.querySelector('.form__input--loan-amount');
+const inputCloseUsername = document.querySelector('.form__input--user');
+const inputClosePin = document.querySelector('.form__input--pin');
+
+const displayMovements = function (movements) {
+  containerMovements.innerHTML = '';
+
+  movements.forEach(function (mov, i) {
+    const type = mov > 0 ? 'deposit' : 'withdrawal';
+
+    const html = ` 
+     <div class="movements__row">
+        <div class="movements__type movements__type--${type}">
+        ${i + 1} ${type} </div>
+        <div class="movements__value">${mov}$</div>
+    </div>
+    `;
+    containerMovements.insertAdjacentHTML('afterbegin', html);
+  });
+};
+displayMovements(account1.movements);
+
+const calcDisplayBalance = function (acc) {
+  acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
+  labelBalance.textContent = `${acc.balance} $`;
+};
+
+const calcDisplaySummary = function (acc) {
+  const incomes = acc.movements
+    .filter(mov => mov > 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumIn.textContent = `${incomes}$`;
+
+  const out = acc.movements
+    .filter(mov => mov < 0)
+    .reduce((acc, mov) => acc + mov, 0);
+  labelSumOut.textContent = `${Math.abs(out)}$`;
+
+  const interest = acc.movements
+    .filter(mov => mov > 0)
+    .map(deposit => (deposit * 1.2) / 100)
+    .reduce((acc, int) => acc + int, 0);
+
+  labelSumInterest.textContent = `${interest}$`;
+};
+const createUserNames = function (accs) {
+  accs.forEach(function (acc) {
+    acc.userName = acc.owner
+      .toLowerCase()
+      .split(' ')
+      .map(name => name[0])
+      .join('');
+  });
+};
+
+createUserNames(accounts);
+const updateUI = function (acc) {
+  //Display Movements
+  displayMovements(acc.movements);
+  //Display Balance
+  calcDisplayBalance(acc);
+  //Display Summary
+  calcDisplaySummary(acc);
+};
+//Event Handler
+let currentAccount;
+btnLogin.addEventListener('click', function (e) {
+  e.preventDefault(); //prevents the form from submitting
+  currentAccount = accounts.find(
+    acc => acc.userName === inputLoginUsername.value
+  );
+  if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    //Display UI and m essage
+    labelWelcome.textContent = `Welcome back, ${
+      currentAccount.owner.split(' ')[0]
+    }`;
+
+    containerApp.style.opacity = 100;
+
+    //Clear Fields
+    inputLoginUsername.value = '';
+    inputLoginPin.value = '';
+    inputLoginPin.blur();
+    //Updating the UI
+    updateUI(currentAccount);
   }
 });
 
-btnHold.addEventListener('click', function () {
-  if (playing) {
-    //1. Add current score to active player score
-    scores[activePLayer] += currentScore;
-    document.getElementById(`score--${activePLayer}`).textContent =
-      scores[activePLayer];
-    //2. Check if player's sore is >= 100
-    if (scores[activePLayer] >= 50) {
-      //finish the game
-      // if(activePLayer === 0){
-      //     alert('player 1 Wins!! ');
-      // }else{
-      //     alert('player 2 Wins!! ');
-      // }
-      playing = false;
-      diceEl.classList.add('hidden');
-      document
-        .querySelector(`.player--${activePLayer}`)
-        .classList.add('player--winner');
-      document
-        .querySelector(`.player--${activePLayer}`)
-        .classList.remove('player--active');
-    } else {
-      //switch the player
-      switchPLayer();
-    }
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputTransferAmount.value);
+  const receiverAcc = accounts.find(
+    acc => acc.userName === inputTransferTo.value
+  );
+  inputTransferTo.value = inputTransferAmount.value = '';
+  if (
+    amount > 0 &&
+    receiverAcc &&
+    currentAccount.balance >= amount &&
+    receiverAcc?.userName !== currentAccount.userName
+  ) {
+    currentAccount.movements.push(-amount);
+    receiverAcc.movements.push(amount);
+    //Updating the UI
+    updateUI(currentAccount);
   }
 });
 
-btnNew.addEventListener('click', function () {
-  location.reload();
-});
+btnLoan.addEventListener('click',function(e){
+  e.preventDefault();
+  const loanAmount = Number(inputLoanAmount.value);
+  inputLoanAmount.value = '';
+  if(loanAmount > 0){
+    currentAccount.movements.push(loanAmount);
+    updateUI(currentAccount);
+  }
+
+})
+
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+// LECTURES
+
+// const currencies = new Map([
+//   ['USD', 'United States dollar'],
+//   ['EUR', 'Euro'],
+//   ['GBP', 'Pound sterling'],
+// ]);
+
+// const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
+
+// /////////////////////////////////////////////////
+// let arr = ['a','b','c','d','e'];
+
+// console.log(arr.slice(2));
