@@ -34,7 +34,10 @@ nav {
   font-size: 1.9rem;
   font-weight: 500;
 }
-
+.userinfo {
+  font-size: 1.3rem;
+  font-weight: 200;
+}
 .logo {
   height: 5.25rem;
 }
